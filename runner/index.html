@@ -765,19 +765,15 @@ function animate() {
     }
 
     if (state.isPlaying && !state.isGameOver) {
-        // Speed increase
         state.speed = Math.min(state.maxSpeed, state.speed + delta * 0.5);
         state.distance += state.speed * delta;
         state.score += state.speed * delta * 0.1;
         
-        // ДВИЖЕНИЕ ВПЕРЁД
         state.player.position.z -= state.speed * delta;
         
-        // Player movement
         state.player.position.x += (state.targetLaneX - state.player.position.x) * 10 * delta;
         state.player.rotation.z = -(state.player.position.x - state.targetLaneX) * 0.15;
         
-        // Jump physics
         state.velocityY += GRAVITY * delta;
         state.player.position.y += state.velocityY * delta;
         
@@ -787,18 +783,15 @@ function animate() {
             state.isJumping = false;
         }
 
-        // Camera follow
         const targetCamX = state.player.position.x * 0.5;
         camera.position.x += (targetCamX - camera.position.x) * 5 * delta;
         camera.position.z = state.player.position.z + 8;
         camera.position.y = state.player.position.y + 4;
         camera.lookAt(state.player.position.x, state.player.position.y + 1, state.player.position.z - 5);
 
-        // Light follow
         dirLight.position.set(state.player.position.x + 5, state.player.position.y + 15, state.player.position.z + 10);
         dirLight.target = state.player;
 
-        // Segment recycling
         state.segments.forEach(seg => {
             if (seg.z < state.player.position.z - SEGMENT_LENGTH) {
                 seg.z += SEGMENT_COUNT * SEGMENT_LENGTH;
@@ -807,7 +800,6 @@ function animate() {
             }
         });
 
-        // Collision Detection
         playerBox.setFromObject(state.player);
         playerBox.expandByScalar(-0.3);
 
@@ -839,6 +831,24 @@ function animate() {
 
         updateUI();
     }
+
+    for (let i = state.particles.length - 1; i >= 0; i--) {
+        const p = state.particles[i];
+        p.life -= delta * 1.5;
+        p.velocity.y += GRAVITY * delta;
+        p.mesh.position.addScaledVector(p.velocity, delta);
+        p.mesh.rotation.x += delta * 5;
+        p.mesh.rotation.y += delta * 5;
+        p.mesh.scale.setScalar(p.life);
+        
+        if (p.life <= 0 || p.mesh.position.y < -5) {
+            scene.remove(p.mesh);
+            state.particles.splice(i, 1);
+        }
+    }
+
+    renderer.render(scene, camera);
+}
 
     // Particles update
     for (let i = state.particles.length - 1; i >= 0; i--) {
