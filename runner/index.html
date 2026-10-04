@@ -795,12 +795,14 @@ function animate() {
 
         let hitObstacle = false;
         state.segments.forEach(seg => {
-            seg.obstacles.forEach(obs => {
-                obsBox.setFromObject(obs.mesh);
-                if (playerBox.intersectsBox(obsBox)) {
-                    hitObstacle = true;
-                }
-            });
+    // Если сегмент позади игрока (игрок движется в -Z, значит позади = больший z)
+    if (seg.z > state.player.position.z + SEGMENT_LENGTH) {
+        // Переносим сегмент вперёд (в -Z)
+        seg.z -= SEGMENT_COUNT * SEGMENT_LENGTH;
+        seg.mesh.position.z = seg.z;
+        spawnObstaclesAndCoins(seg);
+    }
+});
             
             seg.coins.forEach(coin => {
                 if (coin.active) {
