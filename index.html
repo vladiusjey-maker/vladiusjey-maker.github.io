@@ -217,7 +217,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
-// --- State Management ---
 const state = {
     isPlaying: false,
     isGameOver: false,
@@ -245,7 +244,6 @@ const SEGMENT_COUNT = 6;
 const GRAVITY = -30;
 const JUMP_FORCE = 12;
 
-// --- Scene Setup ---
 const container = document.getElementById('canvas-container');
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87ceeb);
@@ -263,7 +261,6 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.1;
 container.appendChild(renderer.domElement);
 
-// --- Lighting ---
 const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
 hemiLight.position.set(0, 50, 0);
 scene.add(hemiLight);
@@ -285,7 +282,6 @@ dirLight.shadow.camera.bottom = -20;
 scene.add(dirLight);
 scene.add(dirLight.target);
 
-// --- Texture Generators ---
 function createDashedLineTexture() {
     const canvas = document.createElement('canvas');
     canvas.width = 64;
@@ -302,7 +298,6 @@ function createDashedLineTexture() {
 
 const dashedLineTex = createDashedLineTexture();
 
-// --- Materials ---
 const matAsphalt = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.8 });
 const matWhiteLine = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
 const matYellowLine = new THREE.MeshStandardMaterial({ color: 0xffff00, emissive: 0xffaa00, emissiveIntensity: 0.6, roughness: 0.5 });
@@ -316,7 +311,6 @@ const matCoin = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.8
 const matLampPole = new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 0.6, roughness: 0.4 });
 const matLampLight = new THREE.MeshStandardMaterial({ color: 0xffffaa, emissive: 0xffdd44, emissiveIntensity: 1.5 });
 
-// --- Player Setup ---
 function hideLoading() {
     const loadingScreen = document.getElementById('loading-screen');
     if (loadingScreen) {
@@ -418,7 +412,6 @@ function setupPlayer() {
     );
 }
 
-// --- Environment Generation ---
 function createBuilding() {
     const group = new THREE.Group();
     const width = 4 + Math.random() * 6;
@@ -589,7 +582,6 @@ for (let i = 0; i < SEGMENT_COUNT; i++) {
     state.segments.push(seg);
 }
 
-// --- Input Handling ---
 function handleJump() {
     if (!state.isJumping && state.isPlaying && !state.isGameOver) {
         state.velocityY = JUMP_FORCE;
@@ -783,8 +775,8 @@ function animate() {
         dirLight.target = state.player;
 
         state.segments.forEach(seg => {
-            if (seg.z < state.player.position.z - SEGMENT_LENGTH) {
-                seg.z += SEGMENT_COUNT * SEGMENT_LENGTH;
+            if (seg.z > state.player.position.z + SEGMENT_LENGTH) {
+                seg.z -= SEGMENT_COUNT * SEGMENT_LENGTH;
                 seg.mesh.position.z = seg.z;
                 spawnObstaclesAndCoins(seg);
             }
@@ -795,14 +787,12 @@ function animate() {
 
         let hitObstacle = false;
         state.segments.forEach(seg => {
-    // Если сегмент позади игрока (игрок движется в -Z, значит позади = больший z)
-    if (seg.z > state.player.position.z + SEGMENT_LENGTH) {
-        // Переносим сегмент вперёд (в -Z)
-        seg.z -= SEGMENT_COUNT * SEGMENT_LENGTH;
-        seg.mesh.position.z = seg.z;
-        spawnObstaclesAndCoins(seg);
-    }
-});
+            seg.obstacles.forEach(obs => {
+                obsBox.setFromObject(obs.mesh);
+                if (playerBox.intersectsBox(obsBox)) {
+                    hitObstacle = true;
+                }
+            });
             
             seg.coins.forEach(coin => {
                 if (coin.active) {
